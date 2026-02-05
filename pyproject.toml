@@ -1,0 +1,9 @@
+[project]
+name = "c8-pi-auth-module"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "keyring>=25.7.0",
+]
