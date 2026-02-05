@@ -1,4 +1,3 @@
-# secrets.py
 from __future__ import annotations
 
 import getpass
@@ -7,14 +6,13 @@ from typing import Optional, Tuple
 
 import keyring
 
-# One shared name for where secrets live in the OS keyring.
-# You can change this without touching scripts.
+# One shared name for where secrets live in the OS keyring. 
+# For Windows: Windows Credential Manager
 SERVICE_NAME = os.getenv("KEYRING_SERVICE", "pi-weblogger")
 
 # Optional: allow multiple credential sets (prod/test/etc.)
 DEFAULT_ACCOUNT = os.getenv("KEYRING_ACCOUNT", "prod")
 
-# Env override (handy for CI/emergency). If set, these win.
 ENV_USER = "PI_USER"
 ENV_PASS = "PI_PASS"
 
