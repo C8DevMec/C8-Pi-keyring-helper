@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import getpass
+import logging
+import logging.handlers
 import os
 from typing import Optional, Tuple
 
@@ -15,10 +17,37 @@ DEFAULT_ACCOUNT = os.getenv("KEYRING_ACCOUNT", "prod")
 
 ENV_USER = "PI_USER"
 ENV_PASS = "PI_PASS"
+ENV_LOG_FILE = "PI_SECRETS_LOG"
 
 
 class MissingSecretError(RuntimeError):
     pass
+
+
+def _get_logger() -> logging.Logger:
+    logger = logging.getLogger("pi_weblogger.secrets")
+    logger.setLevel(logging.ERROR)
+    logger.propagate = False
+
+    if any(isinstance(h, logging.FileHandler) for h in logger.handlers):
+        return logger
+
+    log_path = os.getenv(ENV_LOG_FILE, "pi-secrets-errors.log")
+    try:
+        handler = logging.handlers.RotatingFileHandler(
+            log_path,
+            maxBytes=1_000_000,
+            backupCount=3,
+            encoding="utf-8",
+        )
+        handler.setLevel(logging.ERROR)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s: %(message)s"))
+        logger.addHandler(handler)
+    except Exception:
+        logger.addHandler(logging.NullHandler())
+        return logger
+
+    return logger
 
 
 def _env_credentials() -> Optional[Tuple[str, str]]:
@@ -79,11 +108,13 @@ def get_basic_auth(account: str = DEFAULT_ACCOUNT, *, interactive_bootstrap: boo
         if username and password:
             return username, password
 
+    _get_logger().error(
+        "Missing credentials for service='%s', account='%s'.",
+        SERVICE_NAME,
+        account,
+    )
     raise MissingSecretError(
-        f"Missing credentials.\n"
-        f"- Set env vars {ENV_USER}/{ENV_PASS}, OR\n"
-        f"- Run: python -c \"import secrets; secrets.set_basic_auth('{account}')\"\n"
-        f"(service='{SERVICE_NAME}', account='{account}')"
+        f"Missing credentials for service='{SERVICE_NAME}', account='{account}'."
     )
 
 
