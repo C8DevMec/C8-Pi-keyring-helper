@@ -15,8 +15,6 @@ SERVICE_NAME = os.getenv("KEYRING_SERVICE", "pi-weblogger")
 # Optional: allow multiple credential sets (prod/test/etc.)
 DEFAULT_ACCOUNT = os.getenv("KEYRING_ACCOUNT", "prod")
 
-ENV_USER = "PI_USER"
-ENV_PASS = "PI_PASS"
 ENV_LOG_FILE = "PI_SECRETS_LOG"
 
 
@@ -50,14 +48,6 @@ def _get_logger() -> logging.Logger:
     return logger
 
 
-def _env_credentials() -> Optional[Tuple[str, str]]:
-    u = os.getenv(ENV_USER)
-    p = os.getenv(ENV_PASS)
-    if u and p:
-        return u, p
-    return None
-
-
 def _key_names(account: str) -> Tuple[str, str]:
     # We store username and password under stable keys.
     # keyring uses (service, username) -> password
@@ -85,14 +75,9 @@ def get_basic_auth(account: str = DEFAULT_ACCOUNT, *, interactive_bootstrap: boo
     Returns (username, password).
 
     Priority:
-      1) Env vars PI_USER/PI_PASS
-      2) OS keyring
-      3) (optional) prompt + store if interactive_bootstrap=True
+      1) OS keyring
+      2) (optional) prompt + store if interactive_bootstrap=True
     """
-    env = _env_credentials()
-    if env:
-        return env
-
     user_key, pass_key = _key_names(account)
     username = keyring.get_password(SERVICE_NAME, user_key)
     password = keyring.get_password(SERVICE_NAME, pass_key)
